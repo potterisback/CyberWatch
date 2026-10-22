@@ -1,0 +1,12 @@
+.git
+.venv
+var
+data/raw
+data/prepared
+data/synthetic
+data/stream
+__pycache__
+*.pyc
+*.zip
+artifacts/spark_model
+tmp

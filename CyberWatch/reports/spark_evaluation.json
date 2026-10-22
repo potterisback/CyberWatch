@@ -1,0 +1,125 @@
+{
+  "dataset": "UNSW-NB15",
+  "engine": "Spark ML RandomForestClassifier",
+  "generated_at": "2026-10-22T04:00:28.805+00:00",
+  "seed": 42,
+  "training_rows": 2820,
+  "testing_rows": 1500,
+  "threshold": 0.5,
+  "precision": 0.7710727969348659,
+  "recall": 0.9781287970838396,
+  "f1": 0.8623460096411354,
+  "roc_auc": 0.9630508407652228,
+  "pr_auc": 0.9722850404719022,
+  "confusion_matrix": [
+    [
+      438,
+      239
+    ],
+    [
+      18,
+      805
+    ]
+  ],
+  "feature_names": [
+    "dur",
+    "spkts",
+    "dpkts",
+    "sbytes",
+    "dbytes",
+    "rate",
+    "sttl",
+    "dttl",
+    "sload",
+    "dload",
+    "sloss",
+    "dloss",
+    "smean",
+    "dmean",
+    "synack",
+    "ackdat",
+    "ct_srv_src",
+    "ct_dst_ltm",
+    "ct_src_dport_ltm",
+    "ct_dst_sport_ltm",
+    "ct_state_ttl",
+    "proto=tcp",
+    "proto=udp",
+    "proto=icmp",
+    "proto=other",
+    "service=http",
+    "service=dns",
+    "service=ftp",
+    "service=smtp",
+    "service=ssh",
+    "service=-",
+    "service=other",
+    "state=FIN",
+    "state=CON",
+    "state=INT",
+    "state=REQ",
+    "state=other"
+  ],
+  "training_sha256": "3d154643b290e636d62d501c7d45b8e4bbd6ac4bf8b0b23c2edb4407e1e28b84",
+  "testing_sha256": "87e5a8263d349b9832198ce6c7540c44989aaa1723fbfee29fe818ccb540f6f3",
+  "feature_importance": [
+    {
+      "feature": "sttl",
+      "importance": 0.23998070033975777
+    },
+    {
+      "feature": "ct_state_ttl",
+      "importance": 0.12979897817509567
+    },
+    {
+      "feature": "dttl",
+      "importance": 0.07964275759011065
+    },
+    {
+      "feature": "dload",
+      "importance": 0.07194540133494438
+    },
+    {
+      "feature": "ackdat",
+      "importance": 0.06579449849437381
+    },
+    {
+      "feature": "dpkts",
+      "importance": 0.05175188807641351
+    },
+    {
+      "feature": "ct_srv_src",
+      "importance": 0.03944022101435943
+    },
+    {
+      "feature": "synack",
+      "importance": 0.033091100806973625
+    },
+    {
+      "feature": "dur",
+      "importance": 0.03164161232448538
+    },
+    {
+      "feature": "state=INT",
+      "importance": 0.03085061015719674
+    },
+    {
+      "feature": "dmean",
+      "importance": 0.03074093597969465
+    },
+    {
+      "feature": "dbytes",
+      "importance": 0.03057408056822621
+    }
+  ],
+  "validation_scope": "Real-data sample validation; not the complete dataset evaluation",
+  "sampling": {
+    "method": "reservoir",
+    "seed": 42,
+    "source_train_rows": 175341,
+    "source_test_rows": 82332,
+    "sample_train_before_dedup": 3000,
+    "sample_test": 1500,
+    "reproduce": "python scripts/sample_splits.py"
+  }
+}
