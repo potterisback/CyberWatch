@@ -1,6 +1,0 @@
-pyspark==3.5.7
-kafka-python==2.2.15
-# Spark 3.5 ML imports distutils; setuptools supplies it on Python 3.12.
-setuptools==80.9.0
-numpy>=1.23,<3
-pandas==2.2.3

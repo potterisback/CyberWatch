@@ -1,8 +1,0 @@
-{
-  "batch_rows": 120,
-  "duplicate_replay_deduplicated": true,
-  "rule_parity": true,
-  "file_stream_and_checkpoint_restart": true,
-  "fail_closed_quality_gate": true,
-  "real_iceberg_snapshots": 4
-}

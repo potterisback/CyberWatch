@@ -221,6 +221,34 @@ reste uniquement sur ton ordinateur.
 
 ## Dépannage Git
 
+**GitHub Actions : `ModuleNotFoundError: No module named 'cyberwatch'`**
+
+Python ne trouve pas le code du projet. Le ZIP complet contient ce dossier ;
+vérifie qu'il est aussi présent sur GitHub. À la racine du dépôt, à côté de
+`run.py`, `pyproject.toml` et `tests/`, tu dois avoir le dossier **`cyberwatch`**
+en minuscules, contenant notamment `__init__.py`, `detection.py` et `schema.py`.
+Linux, utilisé par GitHub Actions, distingue les majuscules des minuscules.
+
+Recopie le contenu complet du ZIP corrigé dans ton dépôt local, en conservant
+son dossier `.git`. Copie aussi `.github/workflows/ci.yml`. Le workflow corrigé
+vérifie les fichiers, installe le projet avec `pip install -e ".[ml]"` ou
+`pip install -e ".[bigdata]"`, puis vérifie l'import avant de lancer les tests.
+Installer seulement scikit-learn n'installe pas le paquet local CyberWatch.
+
+Dans le terminal de ton dépôt, vérifie et envoie la correction :
+
+```powershell
+python -c "from cyberwatch.detection import Detector; print('Import OK')"
+git add .github/workflows/ci.yml cyberwatch pyproject.toml docs/DEMARRER_ET_GITHUB_FR.md docs/VALIDATION.md
+git commit -m "Fix CyberWatch installation in GitHub Actions"
+git push
+```
+
+Retourne dans **Actions** et ouvre le nouveau run déclenché par ce push. Relancer
+l'ancien run utilise l'ancienne version des fichiers. Si le problème persiste,
+copie le texte de la première étape rouge et le lien du dépôt pour vérifier sa
+structure exacte.
+
 **`not a git repository`** : tu n'es pas dans le dossier du dépôt. Ouvre le bon
 dossier ou suis 6B si aucun dépôt n'existe encore.
 

@@ -1,8 +1,0 @@
-{
-  "received": 1000,
-  "rejected": 0,
-  "silver_total": 1000,
-  "elapsed_seconds": 10.853,
-  "backend": "spark-iceberg",
-  "generated_at": "2026-10-22T04:01:26.435+00:00"
-}

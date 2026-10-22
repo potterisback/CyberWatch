@@ -1,2 +1,0 @@
-# The offline demo uses only Python's standard library.
-# Install ML dependencies separately: pip install -r requirements-ml.txt

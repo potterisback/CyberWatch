@@ -32,6 +32,36 @@ the actual execution results. No Docker/Trino pass is implied by native tests.
 - Browser checks used Playwright 1.56.1 / Chromium 141, with locally generated
   demonstration data.
 
+## CI package-import correction — 22 October 2026
+
+A supplied GitHub Actions screenshot shows `ModuleNotFoundError: No module
+named 'cyberwatch'` while importing `tests/test_core.py`. All 12 tests pass
+with the complete original ZIP in Work, so the screenshot alone does not
+identify whether the remote source folder is missing, misnamed or outside
+Python's import path. The remote repository contents have not been inspected.
+
+Both workflow jobs now check that `pyproject.toml` and the lowercase
+`cyberwatch/` source package are present at the repository root. They install
+the project with its declared optional dependencies before running tests,
+and verify imports using Python's isolated mode (`-I`). A missing package
+produces an actionable source-layout error.
+
+Validation of this correction in Work:
+
+- A fresh virtual environment installed the project with
+  `python -m pip install -e ".[ml]"` (Python 3.12.14, scikit-learn 1.7.2).
+- The installed package imports outside the source directory with `-I`.
+- All 12 unit tests pass with `-I` and no `PYTHONPATH` override.
+- The offline demo command and source compilation complete successfully.
+- The Big Data environment installs `.[bigdata]` and imports the Spark
+  pipeline outside the source directory with `-I`.
+- The source-layout check rejects an empty directory with its intended error.
+
+The updated workflow has not been run on GitHub in this session. The full
+Spark integration was not repeated for this workflow-only change; its earlier
+execution evidence is listed above. Python 3.10 and 3.11 remain in the CI
+matrix, but were not available for local reruns of this correction.
+
 ## Reading the reports correctly
 
 `evaluation.json` is the complete real-data **scikit-learn** evaluation. It is
