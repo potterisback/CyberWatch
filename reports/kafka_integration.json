@@ -1,0 +1,8 @@
+{
+  "backend": "actual Kafka and Spark; local HadoopCatalog Iceberg",
+  "acknowledged": 60,
+  "silver_unique_rows": 60,
+  "kafka_replay_deduplicated": true,
+  "portable_forest_parity_error": 0.0,
+  "kafka_partitions": 3
+}

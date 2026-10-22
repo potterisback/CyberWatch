@@ -1,0 +1,28 @@
+{
+  "browser": {
+    "desktop_viewport": [
+      1440,
+      1050
+    ],
+    "mobile_viewport": [
+      390,
+      844
+    ],
+    "javascript_errors": 0,
+    "page_horizontal_overflow": false,
+    "protocol_filter": true,
+    "alert_search": true,
+    "tabs": true,
+    "evaluation_rendered": true
+  },
+  "compose": {
+    "yaml_parsed": true,
+    "dependency_graph_checked": true,
+    "docker_runtime_available": false,
+    "full_stack_executed": false
+  },
+  "core": {
+    "unittest_cases": 12,
+    "passed": 12
+  }
+}

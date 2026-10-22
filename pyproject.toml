@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyberwatch-lakehouse"
+version = "1.0.0"
+description = "Network intrusion detection with Kafka, Spark, Iceberg and Trino"
+requires-python = ">=3.10,<3.13"
+authors = [{name = "Harry Lebon-Barré"}]
+dependencies = []
+
+[project.optional-dependencies]
+ml = ["scikit-learn==1.7.2"]
+bigdata = ["pyspark==3.5.7", "kafka-python==2.2.15", "setuptools==80.9.0", "numpy>=1.23,<3", "pandas==2.2.3"]
+
+[project.scripts]
+cyberwatch = "cyberwatch.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["cyberwatch*"]
+
+[tool.setuptools.package-data]
+cyberwatch = ["web/*.html", "web/*.css", "web/*.js"]

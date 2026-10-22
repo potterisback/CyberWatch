@@ -1,0 +1,21 @@
+{
+  "backend": "SQLite local reference (not Spark or Kafka)",
+  "results": [
+    {
+      "mode": "single_batch",
+      "rows": 5000,
+      "elapsed_seconds": 0.2088062779998836,
+      "records_per_second": 23945.64017851411,
+      "alert_count": 0
+    },
+    {
+      "mode": "micro_batches",
+      "rows": 5000,
+      "elapsed_seconds": 0.23101781099990149,
+      "records_per_second": 21643.352858200757,
+      "alert_count": 0
+    }
+  ],
+  "same_alert_count": true,
+  "note": "One measured local run per mode, excluding CSV decoding; not a distributed scalability claim."
+}

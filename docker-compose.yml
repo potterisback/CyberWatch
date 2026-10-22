@@ -1,0 +1,150 @@
+name: cyberwatch
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  image: cyberwatch-app:1.0
+  working_dir: /app
+  volumes:
+    - .:/app
+  environment:
+    CYBERWATCH_CATALOG: rest
+    ICEBERG_REST_URI: http://catalog:8181
+    ICEBERG_WAREHOUSE: s3://warehouse/
+    S3_ENDPOINT: http://object-store:9000
+    AWS_ACCESS_KEY_ID: cyberwatch
+    AWS_SECRET_ACCESS_KEY: cyberwatch-local-only-2026
+    AWS_REGION: us-east-1
+    KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    PYTHONPATH: /app
+
+services:
+  kafka:
+    image: apache/kafka:3.9.1
+    ports: ["127.0.0.1:9092:9092"]
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:29092,CONTROLLER://:29093,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+    volumes: ["kafka-data:/tmp/kraft-combined-logs"]
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka:29092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+
+  kafka-init:
+    image: apache/kafka:3.9.1
+    depends_on:
+      kafka: {condition: service_healthy}
+    entrypoint: ["/opt/kafka/bin/kafka-topics.sh"]
+    command: ["--bootstrap-server", "kafka:29092", "--create", "--if-not-exists", "--topic", "cyberwatch.flows", "--partitions", "3", "--replication-factor", "1"]
+
+  object-store:
+    image: rustfs/rustfs:1.0.0
+    ports: ["127.0.0.1:9000:9000", "127.0.0.1:9001:9001"]
+    environment:
+      RUSTFS_ACCESS_KEY: cyberwatch
+      RUSTFS_SECRET_KEY: cyberwatch-local-only-2026
+      RUSTFS_OBS_LOG_STDOUT_ENABLED: "true"
+    volumes: ["object-data:/data"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:9000/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  create-bucket:
+    image: rustfs/rustfs:1.0.0
+    depends_on:
+      object-store: {condition: service_healthy}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        curl -sf -o /dev/null --aws-sigv4 aws:amz:us-east-1:s3 --user cyberwatch:cyberwatch-local-only-2026
+        --head http://object-store:9000/warehouse ||
+        curl -sSf --aws-sigv4 aws:amz:us-east-1:s3 --user cyberwatch:cyberwatch-local-only-2026
+        -X PUT http://object-store:9000/warehouse
+
+  catalog:
+    image: apache/iceberg-rest-fixture:1.9.2
+    depends_on:
+      create-bucket: {condition: service_completed_successfully}
+    environment:
+      AWS_ACCESS_KEY_ID: cyberwatch
+      AWS_SECRET_ACCESS_KEY: cyberwatch-local-only-2026
+      AWS_REGION: us-east-1
+      CATALOG_CATALOG__IMPL: org.apache.iceberg.jdbc.JdbcCatalog
+      CATALOG_URI: jdbc:sqlite:/tmp/cyberwatch_catalog.db
+      CATALOG_WAREHOUSE: s3://warehouse/
+      CATALOG_IO__IMPL: org.apache.iceberg.aws.s3.S3FileIO
+      CATALOG_S3_ENDPOINT: http://object-store:9000
+      CATALOG_S3_PATH__STYLE__ACCESS: "true"
+    volumes: ["catalog-data:/tmp"]
+    ports: ["127.0.0.1:8181:8181"]
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8181/v1/config"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  stream:
+    <<: *app
+    depends_on:
+      catalog: {condition: service_healthy}
+      kafka-init: {condition: service_completed_successfully}
+    command:
+      - spark-submit
+      - --packages
+      - org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.9.2,org.apache.iceberg:iceberg-aws-bundle:1.9.2,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.7
+      - jobs/spark_job.py
+      - stream
+      - --catalog
+      - rest
+      - --model
+      - artifacts/forest.json
+      - --checkpoint
+      - var/checkpoints/kafka
+      - --report
+      - reports/stream_latest.json
+
+  trino:
+    image: trinodb/trino:475
+    ports: ["127.0.0.1:8080:8080"]
+    volumes: ["./docker/trino/lake.properties:/etc/trino/catalog/lake.properties:ro"]
+    depends_on:
+      catalog: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/v1/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  dashboard:
+    <<: *app
+    depends_on:
+      trino: {condition: service_healthy}
+    command: ["python", "run.py", "serve", "--backend", "trino", "--trino-url", "http://trino:8080", "--host", "0.0.0.0"]
+    ports: ["127.0.0.1:8000:8000"]
+
+  runner:
+    <<: *app
+    profiles: ["tools"]
+    command: ["python", "run.py", "--help"]
+
+volumes:
+  kafka-data:
+  object-data:
+  catalog-data:
