@@ -1,7 +1,9 @@
 # CyberWatch
 
 **Real-Time Network Intrusion Detection and Security Analytics**  
-HUST · Big Data Storage and Processing · Harry Lebon-Barré
+HUST 
+
+Big Data Storage and Processing 
 
 CyberWatch replays historical network-flow records, validates and scores them,
 stores an auditable bronze/silver/gold history, and presents security indicators
@@ -91,86 +93,6 @@ flowchart TD
 Bronze, silver, quarantine and gold are real **Iceberg format v2 tables** backed
 by S3-compatible RustFS storage. A persistent Iceberg REST/JDBC catalog is shared
 by Spark and Trino. Spark batch and streaming jobs call the same transformations.
-
-| Course concept | Implementation |
-|---|---|
-| L04 lakehouse | Iceberg bronze/silver/gold, partitioned silver, snapshot history |
-| L07 interactive SQL | Trino queries the same Iceberg tables |
-| L08 messaging | Kafka, three partitions, acknowledged producer delivery |
-| L09 architecture | One streaming ingestion path with replay and batch backfills |
-| L10/L11 processing | Spark DataFrames, batch entry point and Structured Streaming |
-| L13 machine learning | Optional native Spark ML random forest; portable trained forest for serving |
-| L14 integration | End-to-end pipeline, quality gate, retry-safe writes and serving |
-
-## Detection and measured results
-
-The included portable random forest was actually trained and evaluated on the
-checksum-pinned UNSW-NB15 splits. Training rows sharing an **exact engineered
-feature vector** with a held-out row were removed before fitting. Labels,
-`attack_cat`, identifiers, addresses and split names are excluded from features.
-
-| Metric | Included evaluation |
-|---|---:|
-| Original training records | 175,341 |
-| Cross-split feature duplicates removed from training | 27,807 |
-| Training records after deduplication | 147,534 |
-| Held-out records | 82,332 |
-| Precision | 0.8738 |
-| Recall | 0.9448 |
-| F1 | 0.9079 |
-| ROC AUC | 0.9793 |
-| Average precision | 0.9852 |
-
-Exact metrics, hashes, confusion matrix, seed and library version are in
-[reports/evaluation.json](reports/evaluation.json). This is the **scikit-learn
-model**, distinct from native Spark ML. The separately implemented Spark
-trainer was also exercised on 3,000 / 1,500 reservoir samples; its sample report
-is included as `reports/spark_evaluation.json` (F1 about 0.8623).
-
-Reproduce the included model:
-
-```bash
-python -m pip install -r requirements-ml.txt
-python run.py train
-```
-
-Evaluation uses a fixed 0.5 threshold, with no threshold tuning on test labels.
-Scores from the rules baseline are fixed risk indicators, **not calibrated
-probabilities**. Historical lab data and completed flow records do not establish
-live production effectiveness. The provided split files lack original
-timestamps and addresses: replay time is flagged as simulated and addresses
-stay null. See [REPORT.md](REPORT.md) and [DATA.md](docs/DATA.md).
-
-## Validation
-
-```bash
-python -m unittest discover -s tests -p "test_*.py" -v
-```
-
-The native Spark/Iceberg integration test is documented in the runbook and runs
-in a separate GitHub Actions job. It checks actual Iceberg commits, duplicate
-replay, Structured Streaming, checkpoint restart and the quality gate.
-
-**Execution evidence and boundaries:** [VALIDATION.md](docs/VALIDATION.md).
-Docker orchestration and Trino must be validated with `scripts/stack_smoke.py`
-on a machine with Docker; Work had no Docker executable.
-
-## Repository map
-
-| Path | Contents |
-|---|---|
-| `cyberwatch/` | Shared contract, ingestion, detection, training, server and dashboard |
-| `jobs/spark_job.py` | Actual Spark batch / stream / native ML entry point |
-| `docker-compose.yml`, `docker/` | Kafka, S3, REST catalog, Spark, Trino and dashboard |
-| `artifacts/forest.json` | Portable trained forest, safe JSON format |
-| `reports/` | Measured evaluation and validation evidence |
-| `tests/` | Automated core and Spark/Iceberg integration tests |
-| `sql/` | Analytics, provenance and Iceberg history queries |
-| `docs/` | Architecture, data, execution and GitHub guides |
-
-Raw/prepared datasets, runtime databases, checkpoints and Spark model directories
-are excluded from Git. The trained JSON forest is only about 3.4 MB. The
-repository should contain extracted project files, **not only this ZIP**.
 
 ## References
 
