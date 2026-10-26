@@ -1,0 +1,9 @@
+{
+  "received": 2060,
+  "rejected": 0,
+  "silver_total": 82332,
+  "elapsed_seconds": 3.82,
+  "backend": "spark-iceberg",
+  "generated_at": "2026-10-25T11:08:43.877+00:00",
+  "micro_batch_id": 85
+}

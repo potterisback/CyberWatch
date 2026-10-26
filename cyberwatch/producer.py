@@ -1,6 +1,7 @@
 """Replay completed flow records into Kafka, with delivery acknowledgements."""
 
 import json
+import sys
 import time
 
 from .schema import read_events, utcnow
@@ -34,6 +35,23 @@ def produce(
     )
     started = time.perf_counter()
     pending, count = [], 0
+    tty = sys.stderr.isatty()
+    last_report = started
+    total = limit
+
+    def report(final=False):
+        elapsed = time.perf_counter() - started
+        actual = count / elapsed if elapsed > 0 else 0.0
+        of = f"/{total}" if total else ""
+        line = (
+            f"[produce] {topic} sent={count}{of} "
+            f"rate={actual:,.0f}/s (target {rate:g}/s) t={elapsed:5.1f}s"
+        )
+        if tty:
+            print("\r" + line + "\033[K", end="\n" if final else "", file=sys.stderr, flush=True)
+        else:
+            print(line, file=sys.stderr, flush=True)
+
     try:
         for event in read_events(path, "replay", limit, start_time=utcnow()):
             pending.append(producer.send(topic, key=event["event_id"], value=event))
@@ -45,9 +63,14 @@ def produce(
             delay = count / rate - (time.perf_counter() - started)
             if delay > 0:
                 time.sleep(delay)
+            now = time.perf_counter()
+            if now - last_report >= (0.2 if tty else 1.0):
+                report()
+                last_report = now
         for future in pending:
             future.get(timeout=60)
         producer.flush(timeout=60)
+        report(final=True)
     finally:
         producer.close(timeout=30)
     return dict(
